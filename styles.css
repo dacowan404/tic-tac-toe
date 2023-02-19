@@ -1,0 +1,24 @@
+.container {
+  display: grid;
+  grid-template-rows: 1fr 4fr;
+  height: 500px;
+  width: 400px;
+}
+
+.score {
+  background-color: red;
+}
+
+.game {
+  background-color: black;
+  display: grid;
+  grid-template-rows:  repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+button {
+  height: 100%;
+  width: 100%;
+  background-color: white;
+}
