@@ -5,22 +5,24 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="styles.css"/>
   <script  src="script.js" defer></script>
 </head>
 <body>
   <div  class="container">
-    <div class="score"></div>
+    <div class="top">
+      <button class="reset" onclick="newGame.reset()">Reset</button>
+    </div>
     <div class="game">
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
-      <button></button>
+      <button id="a" onclick="newGame.turn(0)"></button>
+      <button id="b" onclick="newGame.turn(1)"></button>
+      <button id="c" onclick="newGame.turn(2)"></button>
+      <button id="d" onclick="newGame.turn(3)"></button>
+      <button id="e" onclick="newGame.turn(4)"></button>
+      <button id="f" onclick="newGame.turn(5)"></button>
+      <button id="g" onclick="newGame.turn(6)"></button>
+      <button id="h" onclick="newGame.turn(7)"></button>
+      <button id="i" onclick="newGame.turn(8)"></button>
     </div>
   </div>
   

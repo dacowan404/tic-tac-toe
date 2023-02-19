@@ -5,8 +5,10 @@
   width: 400px;
 }
 
-.score {
-  background-color: red;
+.top {
+  background-color: peru;
+  padding: 20px;
+  text-align: center;
 }
 
 .game {
@@ -21,4 +23,17 @@ button {
   height: 100%;
   width: 100%;
   background-color: white;
+}
+
+.x {
+  background-color: aqua;
+}
+
+.o {
+  background-color: red;
+}
+
+.reset {
+  width: 50px;
+  height: 20px;
 }
