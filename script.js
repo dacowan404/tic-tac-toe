@@ -1,12 +1,18 @@
 const Game = () => {
   const X = "X";
   const O = "O";
+  const locationToId = {
+    0: "#a",  1:"#b", 2:"#c", 3: "#d",  4:"#e", 5:"#f", 6: "#g",  7:"#h", 8:"#i",
+  };
+
   let player = 0;
   let moveCount = 0;
   let gameBoard = [[0,0,0], [0,0,0],[0,0,0]];
   let gameOver = false;
+  let moveOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   
-  const checkWin = () => {
+    // return 0 for X/user win, 1 for O/computer win, -1 for no winner
+  const checkWin = (gameBoard) => {
     const win0 = [X, X, X];
     const win1 = [O, O, O];
     let winner = -1;
@@ -20,6 +26,7 @@ const Game = () => {
       return true;
     };
 
+    // return 0 for X/user win, 1 for O/computer win, -1 for no winner
     const checkLine = (line) => {
       if (compareArr(line, win0)) {
         return 0;
@@ -62,7 +69,70 @@ const Game = () => {
     }
   };
 
-  const turn = (location) => {
+  const AImove = () => {
+    // let bestMove = AIsearch(gameBoard, moveOptions, 1);
+    // console.log(bestMove);
+    // return bestMove["loc"];
+    return moveOptions[Math.floor(Math.random()*moveOptions.length)];
+  };
+
+  //need to return location and score, and do min max
+  const AIsearch = (gameBoard, moveOptions, player) => {
+    const currentgameBoard = JSON.parse(JSON.stringify(gameBoard));
+    const currentMoveOptions = JSON.parse(JSON.stringify(moveOptions));;
+    let scores = {};
+  
+    // checks each possible move and recursively checks deeper moves
+    for (let currentMove of currentMoveOptions) {
+      scores[currentMove] = 0;
+      let arrRow = parseInt(currentMove/3);
+      let arrCol = currentMove % 3;
+      if (player === 1) {
+        currentgameBoard[arrRow][arrCol] = O;
+      } else {
+        currentgameBoard[arrRow][arrCol] = X;
+      }
+  
+      const nextMoveOptions = currentMoveOptions.filter((n)=>{return n!=currentMove;});
+      const score = checkWin(currentgameBoard);
+      if (score === 0) {
+        scores[currentMove] += 2;
+      } else if (score === 1) {
+        scores[currentMove] -= 1;
+      } else if (nextMoveOptions.length !== 0) {
+        scores[currentMove] += AIsearch(currentgameBoard, nextMoveOptions, (player+1)%2);
+      }
+    }
+    //min of scores function
+    const minOfScores = () => {
+      let min = {loc: undefined, score: undefined};
+      for (let loc in scores) {
+        if (min.value > scores[loc] || min.value === undefined) {
+          min.value = scores[loc];
+          min.loc = loc;
+        }
+      }
+      return min;
+    }
+    //max of scores function
+    const maxOfScores = () => {
+      let max = {loc: undefined, score: undefined};
+      for (let loc in scores) {
+        if (max.value < scores[loc] || max.value === undefined) {
+          max.value = scores[loc];
+          max.loc = loc;
+        }
+      }
+      return max;
+    }
+    if (player === 0) {
+      return maxOfScores();
+    } else {
+      return minOfScores();
+    }
+  };
+
+  const turnHelper = (location) => {
     const moveCheck = checkValidMove(location);
     if (moveCheck !== 0) {
       return moveCheck;
@@ -71,6 +141,7 @@ const Game = () => {
       return true;
     }
 
+    moveOptions = moveOptions.filter((n)=>{return n!=location;});
     const arrRow = parseInt(location/3);
     const arrCol = location%3;
     //const accessLocation = gameBoard[arrRow][arrCol];
@@ -83,37 +154,7 @@ const Game = () => {
       return -2;
     }
 
-    let buttonID;
-    switch (location) {
-      case 0:
-        buttonID = "#a";
-        break;
-      case 1:
-        buttonID = "#b";
-        break;
-      case 2:
-        buttonID = "#c";
-        break;
-      case 3:
-        buttonID = "#d";
-        break;
-      case 4:
-        buttonID = "#e";
-        break;
-      case 5:
-        buttonID = "#f";
-        break;
-      case 6:
-        buttonID = "#g";
-        break;
-      case 7:
-        buttonID = "#h";
-        break;
-      case 8:
-        buttonID = "#i";
-        break;
-    }
-
+    let buttonID = locationToId[location];
     const currentButton =document.querySelector(buttonID);
     if (player === 0) {
       currentButton.classList.add("x");
@@ -121,7 +162,8 @@ const Game = () => {
       currentButton.classList.add("o");
     }
 
-    let winner = checkWin();
+
+    let winner = checkWin(gameBoard);
     if (winner != -1) {
       gameOver = true;
       alert(`Player ${winner} won congrats!!`);
@@ -136,16 +178,17 @@ const Game = () => {
     }
   };
 
+  const turn = (location) => {
+    turnHelper(location);
+    turnHelper(AImove());
+  };
+
   const checkValidMove = (location) => {
     if (location > 8 || location < 0) {
-      console.log("Invalid location")
       alert("Invalid location");
       return -3;
     } else {
-      const arrRow = parseInt(location/3);
-      const arrCol = location%3;
-      if (gameBoard[arrRow][arrCol] != 0) {
-        console.log("Location occupied");
+      if (!moveOptions.includes(location) ) {
         alert("Location occupied");
         return -4;
       }
@@ -157,10 +200,10 @@ const Game = () => {
     player = 0;
     moveCount = 0;
     gameBoard = [[0,0,0], [0,0,0],[0,0,0]];
+    moveOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     gameOver = false;
-    const buttonIDs = ["#a", "#b", "#c", "#d", "#e", "#f", "#g", "#h", "#i"];
-    for (let ID of buttonIDs) {
-      const currentButton =document.querySelector(ID);
+    for (let ID in locationToId) {
+      const currentButton =document.querySelector(locationToId[ID]);
       currentButton.classList.remove("x");
       currentButton.classList.remove("o");
     }
@@ -169,4 +212,13 @@ const Game = () => {
   return {printBoard, turn, reset};
 };
 
-const newGame = Game()
+const Tree = (currentBoard, moveOptions) => {
+  // user win is 2, draw is 0, AI win is -1
+
+  const search = () => {
+    //recursively search
+  }
+
+};
+
+const newGame = Game();
