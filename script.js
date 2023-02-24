@@ -2,23 +2,23 @@ const Game = () => {
   const X = "X";
   const O = "O";
   const locationToId = {
-    0: "#a",  1:"#b", 2:"#c", 3: "#d",  4:"#e", 5:"#f", 6: "#g",  7:"#h", 8:"#i",
+    0: "#a", 1: "#b", 2: "#c", 3: "#d", 4: "#e", 5: "#f", 6: "#g", 7: "#h", 8: "#i",
   };
 
   let player = 0;
   let moveCount = 0;
-  let gameBoard = [[0,0,0], [0,0,0],[0,0,0]];
+  let gameState = [[0,0,0], [0,0,0],[0,0,0]];
   let gameOver = false;
   let moveOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  
-    // return 0 for X/user win, 1 for O/computer win, -1 for no winner
+
+  // return 1 for X/user win, -1 for O/computer win, 0 for no winner
   const checkWin = (gameBoard) => {
     const win0 = [X, X, X];
     const win1 = [O, O, O];
-    let winner = -1;
+    let winner = 0;
 
     const compareArr = (arr1, arr2) => {
-      for (let i = 0; i<3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         if (arr1[i] !== arr2[i]) {
           return false;
         }
@@ -26,21 +26,22 @@ const Game = () => {
       return true;
     };
 
-    // return 0 for X/user win, 1 for O/computer win, -1 for no winner
+    // return 1 for X/user win, -1 for O/computer win, 0 for no winner
     const checkLine = (line) => {
       if (compareArr(line, win0)) {
-        return 0;
-      } else if (compareArr(line, win1)) {
         return 1;
-      } else {
+      }
+      if (compareArr(line, win1)) {
         return -1;
+      } else {
+        return 0;
       }
     };
 
     // check each row
     for (let line of gameBoard) {
       winner = checkLine(line);
-      if (winner != -1) {
+      if (winner != 0) {
         return winner;
       }
     }
@@ -48,14 +49,14 @@ const Game = () => {
     for (let i=0; i<3; i++) {
       let line = [gameBoard[0][i], gameBoard[1][i], gameBoard[2][i] ];
       winner = checkLine(line);
-      if (winner != -1) {
+      if (winner != 0) {
         return winner;
       }
     }
     // check diagonals
     let diagonal = [gameBoard[0][0], gameBoard[1][1], gameBoard[2][2] ];
     winner = checkLine(diagonal);
-    if (winner != -1) {
+    if (winner != 0) {
       return winner;
     }
     diagonal = [gameBoard[0][2], gameBoard[1][1], gameBoard[2][0]];
@@ -63,28 +64,42 @@ const Game = () => {
     return winner;
   };
 
+  // prints out the board for testing purposes
   const printBoard = () => {
-    for (let line of gameBoard) {
+    for (let line of gameState) {
       console.log(line);
     }
   };
 
-  const AImove = () => {
-    // let bestMove = AIsearch(gameBoard, moveOptions, 1);
-    // console.log(bestMove);
-    // return bestMove["loc"];
-    return moveOptions[Math.floor(Math.random()*moveOptions.length)];
+  // returns score for a board in minMax
+  const minMaxScore = (currentGameBoard, depth) => {
+    const winner = checkWin(currentGameBoard);
+    if (winner === 1) {
+      return 10 - depth;
+    } else if (winner === -1) {
+      return depth - 10;
+    } else {
+      return 0;
+    }
   };
 
-  //need to return location and score, and do min max
-  const AIsearch = (gameBoard, moveOptions, player) => {
+  // retursively call minMax to find best move
+  // player 0 is user, player 1 is computer
+  const minMax = (gameBoard, moveOptions, depth, player) => {
+    const minMaxScoreResult = minMaxScore(gameBoard, depth);
+    if (minMaxScoreResult != 0 || moveOptions.length === 0) {
+      return minMaxScoreResult;
+    }
+
     const currentgameBoard = JSON.parse(JSON.stringify(gameBoard));
-    const currentMoveOptions = JSON.parse(JSON.stringify(moveOptions));;
-    let scores = {};
-  
-    // checks each possible move and recursively checks deeper moves
+    const currentMoveOptions = JSON.parse(JSON.stringify(moveOptions));
+    const currentDepth = depth + 1;
+    let scores = [];
+    let moves = [];
+    let loc = 0;
+
+    //
     for (let currentMove of currentMoveOptions) {
-      scores[currentMove] = 0;
       let arrRow = parseInt(currentMove/3);
       let arrCol = currentMove % 3;
       if (player === 1) {
@@ -92,46 +107,37 @@ const Game = () => {
       } else {
         currentgameBoard[arrRow][arrCol] = X;
       }
-  
       const nextMoveOptions = currentMoveOptions.filter((n)=>{return n!=currentMove;});
-      const score = checkWin(currentgameBoard);
-      if (score === 0) {
-        scores[currentMove] += 2;
-      } else if (score === 1) {
-        scores[currentMove] -= 1;
-      } else if (nextMoveOptions.length !== 0) {
-        scores[currentMove] += AIsearch(currentgameBoard, nextMoveOptions, (player+1)%2);
-      }
-    }
-    //min of scores function
-    const minOfScores = () => {
-      let min = {loc: undefined, score: undefined};
-      for (let loc in scores) {
-        if (min.value > scores[loc] || min.value === undefined) {
-          min.value = scores[loc];
-          min.loc = loc;
-        }
-      }
-      return min;
-    }
-    //max of scores function
-    const maxOfScores = () => {
-      let max = {loc: undefined, score: undefined};
-      for (let loc in scores) {
-        if (max.value < scores[loc] || max.value === undefined) {
-          max.value = scores[loc];
-          max.loc = loc;
-        }
-      }
-      return max;
-    }
-    if (player === 0) {
-      return maxOfScores();
-    } else {
-      return minOfScores();
-    }
-  };
+      scores.push(minMax(currentgameBoard, nextMoveOptions, currentDepth, (player+1)%2));
+      moves.push(currentMove);
+      currentgameBoard[arrRow][arrCol] = 0;
+    };
 
+    // returns max location if player = 0, min location if player =1
+    if (player === 0) {
+      for (let i = 1; i < scores.length; i++) {
+        if (scores[i] > scores[loc]) {
+          loc = i;
+        }
+      }
+    } else {
+      for (let i = 1; i < scores.length; i++) {
+        if (scores[i] < scores[loc]) {
+          loc = i
+        }
+      }
+    }
+    if (depth === 0) {
+      console.log(moves[loc]);
+      return moves[loc];
+    } else {
+      return scores[loc];
+    }
+
+  }
+  
+  // takes a location 0-8 on tic-tac-toe board, confirms it a valid location, then updated gameState and the UI,\
+  // lastly checks if game is over/won
   const turnHelper = (location) => {
     const moveCheck = checkValidMove(location);
     if (moveCheck !== 0) {
@@ -144,11 +150,10 @@ const Game = () => {
     moveOptions = moveOptions.filter((n)=>{return n!=location;});
     const arrRow = parseInt(location/3);
     const arrCol = location%3;
-    //const accessLocation = gameBoard[arrRow][arrCol];
     if (player === 0) {
-     gameBoard[arrRow][arrCol] = X; 
+     gameState[arrRow][arrCol] = X; 
     } else if (player === 1) {
-      gameBoard[arrRow][arrCol] = O;
+      gameState[arrRow][arrCol] = O;
     } else {
       console.log(player)
       return -2;
@@ -162,9 +167,8 @@ const Game = () => {
       currentButton.classList.add("o");
     }
 
-
-    let winner = checkWin(gameBoard);
-    if (winner != -1) {
+    let winner = checkWin(gameState);
+    if (winner != 0) {
       gameOver = true;
       alert(`Player ${winner} won congrats!!`);
       return winner;
@@ -178,11 +182,13 @@ const Game = () => {
     }
   };
 
+  // represents a turn, lets the user input a location adn then lets AI take a turn
   const turn = (location) => {
     turnHelper(location);
-    turnHelper(AImove());
+    turnHelper(minMax(gameState, moveOptions, 0, 1));
   };
 
+  // confirms that move is a valid move
   const checkValidMove = (location) => {
     if (location > 8 || location < 0) {
       alert("Invalid location");
@@ -196,10 +202,11 @@ const Game = () => {
     return 0;
   }
 
+  // resets game board to allow user to play another game
   const reset = () => {
     player = 0;
     moveCount = 0;
-    gameBoard = [[0,0,0], [0,0,0],[0,0,0]];
+    gameState = [[0,0,0], [0,0,0],[0,0,0]];
     moveOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     gameOver = false;
     for (let ID in locationToId) {
@@ -210,15 +217,6 @@ const Game = () => {
   };
 
   return {printBoard, turn, reset};
-};
-
-const Tree = (currentBoard, moveOptions) => {
-  // user win is 2, draw is 0, AI win is -1
-
-  const search = () => {
-    //recursively search
-  }
-
 };
 
 const newGame = Game();
